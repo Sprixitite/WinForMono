@@ -8,9 +8,10 @@ namespace WinForMono {
 
         private class GenericForm : Form {}
 
-        public UIWindow() {
+        public UIWindow(string _title = "Window") {
             derived_underlying = new GenericForm();
             derived_underlying.Resize += invalidate_size;
+            title = _title;
         }
 
         public void run() {
