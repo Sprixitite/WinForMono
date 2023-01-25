@@ -25,7 +25,11 @@ namespace WinForMono.Graphics {
         }
 
         public override string ToString() {
-            return "Vector2 {\n\t" + x + ",\n\t" + y + "\n}";
+            return "Vector2 {\v" +
+                   new string('\b', 5) + x + ",\v" +
+                   new string('\b', x.ToString().Length+1) + y + "\v" +
+                   new string('\b', y.ToString().Length+4) + // Go back to same column as the "V" of "Vector2"
+                   "}";
         }
 
         public float dot(Vector2 other) { float total = 0.0f; total+=(this.x*other.x); total+=(this.y*other.y); return total; }

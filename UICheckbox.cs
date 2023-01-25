@@ -9,6 +9,8 @@ namespace WinForMono {
             
             derived_underlying = new CheckBox();
 
+            CALL_THIS_AFTER_CONSTRUCTION_PLEASE();
+
         }
 
         public override Control underlying {

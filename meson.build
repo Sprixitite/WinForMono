@@ -5,7 +5,7 @@ project(
 
 CSHARP_ARGS = ['/r:System.Windows.Forms.dll', '/r:System.Drawing.dll']
 
-WinForMono_src = files('UIAnchor.cs', 'UIButton.cs', 'UIBuilder.cs', 'UICheckbox.cs', 'UIElement.cs', 'UIPanel.cs', 'UITabs.cs', 'UITextBox.cs', 'UILabel.cs', 'UIPosition.cs', 'UIWindow.cs', 'Vector2.cs', 'WinformWrapper.cs')
+WinForMono_src = files('IMessageBoxHandler.cs', 'UIAnchor.cs', 'UIButton.cs', 'UIBuilder.cs', 'UIComboBox.cs', 'UICheckbox.cs', 'UIElement.cs', 'UIPanel.cs', 'UITabs.cs', 'UITextBox.cs', 'UILabel.cs', 'UIPosition.cs', 'UIWindow.cs', 'Vector2.cs', 'WinformWrapper.cs')
 
 WinForMono_dll = shared_library(
     'WinForMono',

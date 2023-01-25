@@ -43,6 +43,10 @@ namespace WinForMono {
             private set;
         }
 
+        public override string ToString() {
+            return "( " + Enum.GetName(typeof(AnchorX), x) + ", " + Enum.GetName(typeof(AnchorY), y) + " )"; 
+        }
+
         public ContentAlignment to_content_alignment() {
             switch (y) {
                 case AnchorY.TOP: switch (x) {

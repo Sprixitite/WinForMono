@@ -14,15 +14,35 @@ namespace WinForMono {
 
             // Default to top left
             anchor = UIAnchor.TOP_LEFT;
+            position = new UIPosition(0, 0, 0, 0);
 
-            // Default to four pixels from the bottom left on both axes
-            position = new UIPosition(0, 0, 4, 4);
-
-            // Default to (x-4)/2 and (y-4)/2
-            // We subtract 4 to make up for the previous offset
+            // Default to x/2 and y/2
             _size = new UIPosition(0.5f, 0.5f, -4, -4);
 
         }
+
+        protected void CALL_THIS_AFTER_CONSTRUCTION_PLEASE() {
+            if (!default_parent.Equals(WinformWrapper.NULL)) {
+                default_parent.add_element(this);
+            }
+        }
+
+        static UIElement() {
+            default_parent = WinformWrapper.NULL;
+        }
+
+        public static void bind_parent(WinformWrapper binding) {
+            switch (binding == null) {
+                case true:
+                    default_parent = WinformWrapper.NULL;
+                    break;
+                case false:
+                    default_parent = binding;
+                    break;
+            }
+        }
+
+        private static WinformWrapper default_parent;
 
         public UIAnchor anchor {
             get => _anchor;
@@ -43,26 +63,33 @@ namespace WinForMono {
         private UIPosition _size;
 
         protected override void on_transform_invalidated() {
-            
+
+            // Default this to (0, 0) because we figure this out in an "if" branch
             Vector2 parent_dimensions = Vector2.ZERO;
 
+            // We need to make a special-case for windows because the borders are included in their regular Width/Height
+            // Instead use ClientSize.Width/Height to get borderless size
             if (parent.GetType() == typeof(UIWindow)) { parent_dimensions = new Vector2(parent.underlying.ClientSize.Width, parent.underlying.ClientSize.Height); }
             else { parent_dimensions = new Vector2(parent.underlying.Width, parent.underlying.Height); }
 
-            underlying.Left = (int)Math.Floor(parent_dimensions.x * position.scale.x) + (int)position.offset.x;
-            underlying.Top = (int)Math.Floor(parent_dimensions.y * position.scale.y) + (int)position.offset.y;
+            // Position along axis = ( parent size on axis * this.scale along this axis ) + this.offset along this axis
+            int left = (int)Math.Floor(parent_dimensions.x * position.scale.x) + (int)position.offset.x;
+            int top = (int)Math.Floor(parent_dimensions.y * position.scale.y) + (int)position.offset.y;
 
-            underlying.Width = (int)Math.Floor(parent_dimensions.x * size.scale.x) + (int)size.offset.x;
-            underlying.Height = (int)Math.Floor(parent_dimensions.y * size.scale.y) + (int)size.offset.y;
+            // Same as above just using width
+            int width = (int)Math.Floor(parent_dimensions.x * size.scale.x) + (int)size.offset.x;
+            int height = (int)Math.Floor(parent_dimensions.y * size.scale.y) +  (int)size.offset.y;
 
+            // TODO: eventually implement anchoring with Vector2s
+            // ! Should be something to do with subtracting the size * the anchor position along the relevant axes
             switch (anchor.x) {
                 case AnchorX.LEFT:
                     break;
                 case AnchorX.CENTER:
-                    underlying.Left -= (int)Math.Floor(underlying.Width / 2.0f);
+                    left -= (int)Math.Floor(width / 2.0f);
                     break;
                 case AnchorX.RIGHT:
-                    underlying.Left -= underlying.Width;
+                    left -= width;
                     break;
             }
 
@@ -70,14 +97,20 @@ namespace WinForMono {
                 case AnchorY.TOP:
                     break;
                 case AnchorY.CENTER:
-                    underlying.Top -= (int)Math.Floor(underlying.Height / 2.0f);
+                    top -= (int)Math.Floor(height / 2.0f);
                     break;
                 case AnchorY.BOTTOM:
-                    underlying.Top -= underlying.Height;
+                    top -= height;
                     break;
             }
 
-            invalidate_size();
+            // Only set these once because otherwise we get flickering even though the layout is suspended
+            // Above occurring on my Pop!_os 22.04 using xwayland
+            // Also occurred on my fedora 36 install using xwayland
+            underlying.Left = left;
+            underlying.Top = top;
+            underlying.Width = width;
+            underlying.Height = height;
 
         }
 

@@ -18,9 +18,9 @@ namespace WinForMono {
             return this;
         }
 
-        public T build() {
+        public T build(params object[] objects) {
 
-            T built = Activator.CreateInstance<T>();
+            T built = (T)Activator.CreateInstance(typeof(T), objects);
 
             foreach (string field in fields_values.Keys) {
                 built.GetType().GetField(field)?.SetValue(built, fields_values[field]);

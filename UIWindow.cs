@@ -4,21 +4,20 @@ using System.Windows.Forms;
 
 namespace WinForMono {
 
-    public sealed class UIWindow : WinformWrapper {
+    public class UIWindow : WinformWrapper {
 
         private class GenericForm : Form {}
 
-        public UIWindow(string _title = "Window") {
+        public UIWindow() {
             derived_underlying = new GenericForm();
             derived_underlying.Resize += invalidate_size;
-            title = _title;
         }
 
         public void run() {
-            Console.WriteLine(derived_underlying.Enabled);
             // Do this to get the first frame ready
-            derived_underlying.Enabled = true;
+            derived_underlying.Show();
             invalidate_size();
+            derived_underlying.Hide();
 
             // Actually run the thing lol
             Application.Run(derived_underlying);
@@ -35,7 +34,44 @@ namespace WinForMono {
         }
         private Form derived_underlying;
 
-        private void on_size_changed() {
+        public UIResult spawn(
+            string message="DEFAULT_MESSAGE",
+            string title="DEFAULT_TITLE",
+            UIButtonGroup buttons=UIButtonGroup.OK,
+            UIIcon icon=UIIcon.NONE,
+            int default_button=0,
+            MessageBoxOptions options=0,
+            string help_path=null,
+            string help_keyword=null
+        ) {
+
+            if (help_path == null) {
+
+                return (UIResult)MessageBox.Show(
+                    derived_underlying,
+                    message,
+                    title,
+                    (MessageBoxButtons)buttons,
+                    (MessageBoxIcon)icon,
+                    (MessageBoxDefaultButton)default_button,
+                    options
+                );
+
+            } else {
+
+                return (UIResult)MessageBox.Show(
+                    derived_underlying,
+                    message,
+                    title,
+                    (MessageBoxButtons)buttons,
+                    (MessageBoxIcon)icon,
+                    (MessageBoxDefaultButton)default_button,
+                    options,
+                    help_path,
+                    help_keyword
+                );
+
+            }
 
         }
 

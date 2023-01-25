@@ -6,10 +6,14 @@ namespace WinForMono {
 
     public class UIButton : UIElement {
 
-        public UIButton() {
+        public UIButton() : this("Default Text") { }
+
+        public UIButton(string _text) {
             derived_underlying = new Button();
+            text = _text;
             derived_underlying.Click += _underlying_click_handler;
             button_clicked += fake_event_user;
+            CALL_THIS_AFTER_CONSTRUCTION_PLEASE();
         }
 
         ~UIButton() {

@@ -9,10 +9,13 @@ namespace WinForMono {
         public UIPanel() {
 
             underlying = new Panel();
-            underlying.Width = 80;
-            underlying.Height = 80;
-            underlying.BackColor = Color.Blue;
+            CALL_THIS_AFTER_CONSTRUCTION_PLEASE();
 
+        }
+
+        public Color colour {
+            get => underlying.BackColor;
+            set => underlying.BackColor = value;
         }
 
     }

@@ -10,10 +10,11 @@ namespace WinForMono {
 
             public UITabPage(string name) {
                 derived_underlying = new TabPage(name);
+                CALL_THIS_AFTER_CONSTRUCTION_PLEASE();
             }
 
             public override Control underlying {
-                get => derived_underlying;
+                get => (Control)derived_underlying;
                 set => derived_underlying = (TabPage)value;
             }
             private TabPage derived_underlying;
@@ -25,7 +26,9 @@ namespace WinForMono {
             pages = new Dictionary<string, UITabPage>();
         }
 
-        public UITabs(string[] tabs) : this() {
+        public UITabs(string[] tabs) {
+            derived_underlying = new TabControl();
+            pages = new Dictionary<string, UITabPage>();
             foreach (string s in tabs) { this.add_tab(s); }
         }
 
@@ -33,6 +36,10 @@ namespace WinForMono {
             UITabPage new_page = new UITabPage(name);
             add_element(new_page);
             pages[name] = new_page;
+        }
+
+        public void bind_tab(string name) {
+            UIElement.bind_parent(pages[name]);
         }
 
         public void remove_tab(string name) {
@@ -55,7 +62,7 @@ namespace WinForMono {
         private Dictionary<string, UITabPage> pages;
 
         public override Control underlying {
-            get => derived_underlying;
+            get => (Control)derived_underlying;
             set => derived_underlying = (TabControl)value;
         }
         private TabControl derived_underlying;

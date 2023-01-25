@@ -10,6 +10,7 @@ namespace WinForMono {
             derived_underlying = new Label();
             derived_underlying.Text = text;
             derived_underlying.AutoSize = true; // For whatever reason this fixes scaling issues, so we force this on
+            CALL_THIS_AFTER_CONSTRUCTION_PLEASE();
         }
 
         public override Control underlying {

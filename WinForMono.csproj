@@ -49,10 +49,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IMessageBoxHandler.cs" />
     <Compile Include="UIAnchor.cs" />
     <Compile Include="UIBuilder.cs" />
     <Compile Include="UIButton.cs" />
     <Compile Include="UICheckbox.cs" />
+    <Compile Include="UIComboBox.cs" />
     <Compile Include="UIElement.cs" />
     <Compile Include="UIPanel.cs" />
     <Compile Include="UIPosition.cs" />

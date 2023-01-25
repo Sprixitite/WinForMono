@@ -12,7 +12,7 @@ namespace WinForMono {
         protected void invalidate_size(object _s, EventArgs _e) => transform_invalidated.Invoke();
 
         public static readonly WinformWrapper NULL = new WrapperNull();
-        private sealed class WrapperNull : WinformWrapper { public WrapperNull() { underlying = new Label(); } }
+        private sealed class WrapperNull : UIWindow { public WrapperNull() { } protected override void on_transform_invalidated() {} }
 
         public void fake_event_user() {}
 
@@ -30,7 +30,7 @@ namespace WinForMono {
 
             if (underlying.Controls.Contains(element.underlying)) throw new Exception("Attempted to add control to a " + this.GetType().Name + " more than once!");
 
-            WinformWrapper window = try_get_window();
+            WinformWrapper window = get_window();
 
             window.underlying.SuspendLayout();
 
@@ -42,7 +42,7 @@ namespace WinForMono {
 
             element.parent = this;
 
-            window.underlying.ResumeLayout();
+            window.underlying.ResumeLayout(true);
 
         }
 
@@ -50,7 +50,7 @@ namespace WinForMono {
 
             if (!underlying.Controls.Contains(element.underlying)) throw new Exception("Attempted to remove control from a " + this.GetType().Name + " that did not exist!");
 
-            WinformWrapper window = try_get_window();
+            WinformWrapper window = get_window();
 
             window.underlying.SuspendLayout();
 
@@ -59,7 +59,7 @@ namespace WinForMono {
 
             element.parent = WinformWrapper.NULL;
 
-            window.underlying.ResumeLayout();
+            window.underlying.ResumeLayout(true);
 
         }
 
@@ -70,20 +70,11 @@ namespace WinForMono {
             set;
         }
 
-        public UIWindow get_window() {
+        // Recursion is OP
+        public WinformWrapper get_window() {
 
-            if (this.GetType() == typeof(UIWindow)) return (UIWindow)this;
-            else return this.parent.get_window();
-
-        }
-
-        public WinformWrapper try_get_window() {
-
-            try {
-                return get_window();
-            } catch {
-                return WinformWrapper.NULL;
-            }
+            if (this.GetType() == typeof(UIWindow) || this.GetType() == typeof(WrapperNull)) return this;
+            else return parent.get_window();
 
         }
 
@@ -91,9 +82,9 @@ namespace WinForMono {
             get => _base_parent;
             protected set {
                 if (_base_parent != WinformWrapper.NULL) _base_parent.transform_invalidated -= _base_on_transform_invalidated;
-                value.transform_invalidated += _base_on_transform_invalidated;
+                if (value != WinformWrapper.NULL) value.transform_invalidated += _base_on_transform_invalidated;
                 _base_parent = value;
-                _base_on_transform_invalidated();
+                if (underlying != null) _base_on_transform_invalidated();
             }
         }
 
@@ -103,13 +94,15 @@ namespace WinForMono {
 
             //Console.WriteLine("Transform Invalidated!");
 
-            WinformWrapper window = try_get_window();
+            WinformWrapper window = get_window();
 
             window.underlying.SuspendLayout();
 
             on_transform_invalidated();
 
-            window.underlying.ResumeLayout();
+            invalidate_size();
+
+            window.underlying.ResumeLayout(true);
 
         }
 

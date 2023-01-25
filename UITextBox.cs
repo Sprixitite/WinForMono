@@ -6,9 +6,15 @@ namespace WinForMono {
 
     public class UITextBox : UIElement {
 
-        public UITextBox() {
+        public UITextBox() : this(false) {}
+
+        public UITextBox(bool _multiline) {
 
             derived_underlying = new TextBox();
+
+            multiline = _multiline;
+
+            CALL_THIS_AFTER_CONSTRUCTION_PLEASE();
 
         }
 
