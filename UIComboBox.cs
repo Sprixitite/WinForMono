@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
@@ -9,8 +10,14 @@ namespace WinForMono {
         public UIComboBox() {
             derived_underlying = new ComboBox();
             derived_underlying.SelectedIndexChanged += _underlying_selection_handler;
+            derived_underlying.DropDownStyle = ComboBoxStyle.DropDownList;
             selection_changed += fake_event_user;
             CALL_THIS_AFTER_CONSTRUCTION_PLEASE();
+        }
+
+        ~UIComboBox() {
+            derived_underlying.SelectedIndexChanged -= _underlying_selection_handler;
+            selection_changed -= fake_event_user;
         }
 
         private void _underlying_selection_handler(object _s, EventArgs _e) {
@@ -23,13 +30,13 @@ namespace WinForMono {
         }
         private ComboBox derived_underlying;
 
-        private class UIComboBoxItem<T> {
+        private class UIComboBoxItem<J> {
             private string user_name;
-            private T value;
+            private J value;
 
-            public UIComboBoxItem(string name, T _value) { user_name = name; value = _value; }
+            public UIComboBoxItem(string name, J _value) { user_name = name; value = _value; }
 
-            public static implicit operator T(UIComboBoxItem<T> self) => self.value;
+            public static implicit operator J(UIComboBoxItem<J> self) => self.value;
 
             public override string ToString() {
                 return user_name;
@@ -44,7 +51,13 @@ namespace WinForMono {
         public T selected_val {
             get { 
                 if (derived_underlying.SelectedItem == null) return (dynamic)null;
-                else return (UIComboBoxItem<T>)derived_underlying.SelectedItem;
+                else {
+                    try {
+                        return (UIComboBoxItem<T>)derived_underlying.SelectedItem;
+                    } catch {
+                        return new UIComboBoxItem<T>(derived_underlying.SelectedText, (T)derived_underlying.SelectedValue);
+                    }
+                }
             }
         }
 
@@ -108,12 +121,15 @@ namespace WinForMono {
 
         public void bind_source(object source) {
             derived_underlying.DataSource = source;
+            derived_underlying.BindingContext = new BindingContext();
         }
 
         public void refresh_contents() {
+            int previously_selected = derived_underlying.SelectedIndex;
             object _placeholder = derived_underlying.DataSource;
             bind_source(null);
             bind_source(_placeholder);
+            derived_underlying.SelectedIndex = previously_selected;
         }
 
         protected override void on_transform_invalidated() {

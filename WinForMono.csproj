@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{0B863DD2-F838-43F0-B061-DF97A6028468}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>WinForMono</RootNamespace>
     <AssemblyName>WinForMono</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DrawStyle.cs" />
     <Compile Include="IMessageBoxHandler.cs" />
     <Compile Include="UIAnchor.cs" />
     <Compile Include="UIBuilder.cs" />
@@ -56,9 +57,13 @@
     <Compile Include="UICheckbox.cs" />
     <Compile Include="UIComboBox.cs" />
     <Compile Include="UIElement.cs" />
+    <Compile Include="UIElementProps.cs" />
+    <Compile Include="UIElementStatic.cs" />
+    <Compile Include="UIExtension.cs" />
+    <Compile Include="UIFilePicker.cs" />
+    <Compile Include="UIImage.cs" />
     <Compile Include="UIPanel.cs" />
     <Compile Include="UIPosition.cs" />
-    <Compile Include="UIRichLabel.cs" />
     <Compile Include="UITabs.cs" />
     <Compile Include="UITextBox.cs" />
     <Compile Include="UILabel.cs" />
@@ -66,6 +71,8 @@
     <Compile Include="Vector2.cs" />
     <Compile Include="WinformWrapper.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="no_img.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -52,11 +52,11 @@ namespace WinForMono {
         }
 
         public void add_tab_element(string tab_name, UIElement element) {
-            pages[tab_name].add_element(element);
+            element.parent = pages[tab_name];
         }
 
         public void remove_tab_element(string tab_name, UIElement element) {
-            pages[tab_name].remove_element(element);
+            element.parent = WinformWrapper.NULL;
         }
 
         private Dictionary<string, UITabPage> pages;

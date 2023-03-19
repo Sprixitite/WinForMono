@@ -1,4 +1,8 @@
 using System;
+using System.Timers;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
@@ -6,11 +10,13 @@ using WinForMono.Graphics;
 
 namespace WinForMono {
 
-    public abstract class UIElement : WinformWrapper {
+    public abstract partial class UIElement : WinformWrapper {
 
-        public UIElement() {
+        public UIElement(bool wants_parent_ctor = true) {
 
             elements = new List<UIElement>();
+
+            if (!wants_parent_ctor) return;
 
             // Default to top left
             anchor = UIAnchor.TOP_LEFT;
@@ -19,48 +25,99 @@ namespace WinForMono {
             // Default to x/2 and y/2
             _size = new UIPosition(0.5f, 0.5f, -4, -4);
 
+            copy_axis = false;
+            corner_radius = 16;
+            border_size = 0;
+            
+            //underlying.GetType().GetField("")
+
         }
 
+        //-------------------------------------------------------------------------------------------
+
+        // Needed because underlying is always null in the constructor
         protected void CALL_THIS_AFTER_CONSTRUCTION_PLEASE() {
             if (!default_parent.Equals(WinformWrapper.NULL)) {
-                default_parent.add_element(this);
+                this.parent = default_parent;
             }
+            underlying.Paint += paint_border;
+            underlying.MouseEnter += on_hover_start;
+            underlying.MouseLeave += on_hover_end;
         }
 
-        static UIElement() {
-            default_parent = WinformWrapper.NULL;
+        //-------------------------------------------------------------------------------------------
+
+        // Returns a square region with rounded corners
+        // Used for "DrawStyle.ROUNDED_SQUARE"'s implementation
+        private GraphicsPath get_rounded_region(RectangleF Rect, int radius) {
+            float r2 = radius / 2f;
+            GraphicsPath GraphPath = new GraphicsPath();
+            GraphPath.AddArc(Rect.X, Rect.Y, radius, radius, 180, 90);
+            GraphPath.AddLine(Rect.X + r2, Rect.Y, Rect.Width - r2, Rect.Y);
+            GraphPath.AddArc(Rect.X + Rect.Width - radius, Rect.Y, radius, radius, 270, 90);
+            GraphPath.AddLine(Rect.Width, Rect.Y + r2, Rect.Width, Rect.Height - r2);
+            GraphPath.AddArc(Rect.X + Rect.Width - radius, 
+                            Rect.Y + Rect.Height - radius, radius, radius, 0, 90);
+            GraphPath.AddLine(Rect.Width - r2, Rect.Height, Rect.X + r2, Rect.Height);
+            GraphPath.AddArc(Rect.X, Rect.Y + Rect.Height - radius, radius, radius, 90, 90);
+            GraphPath.AddLine(Rect.X, Rect.Height - r2, Rect.X, Rect.Y + r2);
+            GraphPath.CloseFigure();
+            return GraphPath;
         }
 
-        public static void bind_parent(WinformWrapper binding) {
-            switch (binding == null) {
-                case true:
-                    default_parent = WinformWrapper.NULL;
+        //-------------------------------------------------------------------------------------------
+
+        // Implements "DrawStyle"s
+        private void refresh_underlying_region() {
+            switch (_draw_style) {
+                case DrawStyle.SQUARE:
+                    underlying.Region = new Region(new Rectangle(0, 0, underlying.ClientSize.Width, underlying.ClientSize.Height));
                     break;
-                case false:
-                    default_parent = binding;
+                case DrawStyle.ELIPSE:
+                    Rectangle rc = underlying.ClientRectangle;
+                    GraphicsPath gp = new GraphicsPath();
+                    gp.AddEllipse(rc);
+                    underlying.Region = new Region(gp);
+                    break;
+                case DrawStyle.ROUNDED_SQUARE:
+                    underlying.Region = new Region(get_rounded_region(underlying.ClientRectangle, corner_radius));
                     break;
             }
+            
         }
 
-        private static WinformWrapper default_parent;
+        //-------------------------------------------------------------------------------------------
 
-        public UIAnchor anchor {
-            get => _anchor;
-            set { _anchor = value; invalidate_size(); }
+        private void paint_border(object sender, PaintEventArgs pea) {
+            Pen border_pen = new Pen( hovering ? hover_border_colour : border_colour );
+            border_pen.Width = border_size;
+            border_pen.Alignment = PenAlignment.Outset;
+            switch (_draw_style) {
+                case DrawStyle.SQUARE:
+                    pea.Graphics.DrawRectangle(border_pen, underlying.ClientRectangle);
+                    break;
+                case  DrawStyle.ELIPSE:
+                    pea.Graphics.DrawEllipse(border_pen, underlying.ClientRectangle);
+                    break;
+                case DrawStyle.ROUNDED_SQUARE:
+                    pea.Graphics.DrawPath(border_pen, get_rounded_region(underlying.ClientRectangle, corner_radius));
+                    break;
+            }
+            border_pen.Dispose();
         }
-        private UIAnchor _anchor;
 
-        public UIPosition position {
-            get => _position;
-            set { _position = value; invalidate_size(); }
-        }
-        private UIPosition _position;
+        //-------------------------------------------------------------------------------------------
 
-        public UIPosition size {
-            get => _size;
-            set { _size = value; invalidate_size(); }
+        protected bool hovering = false;
+        protected virtual void on_hover_start(object o, EventArgs e) {
+            hovering = true;
         }
-        private UIPosition _size;
+
+        protected virtual void on_hover_end(object o, EventArgs e) {
+            hovering = false;
+        }
+
+        //-------------------------------------------------------------------------------------------
 
         protected override void on_transform_invalidated() {
 
@@ -80,6 +137,15 @@ namespace WinForMono {
             int width = (int)Math.Floor(parent_dimensions.x * size.scale.x) + (int)size.offset.x;
             int height = (int)Math.Floor(parent_dimensions.y * size.scale.y) +  (int)size.offset.y;
 
+            switch (_copy_axis) {
+                case false:
+                    break;
+                case true:
+                    width = Math.Min(width, height);
+                    height = Math.Min(width, height);
+                    break;
+            }
+
             // TODO: eventually implement anchoring with Vector2s
             // ! Should be something to do with subtracting the size * the anchor position along the relevant axes
             switch (anchor.x) {
@@ -93,6 +159,7 @@ namespace WinForMono {
                     break;
             }
 
+            // Correct for vertical anchoring
             switch (anchor.y) {
                 case AnchorY.TOP:
                     break;
@@ -111,6 +178,70 @@ namespace WinForMono {
             underlying.Top = top;
             underlying.Width = width;
             underlying.Height = height;
+
+            refresh_underlying_region();
+
+        }
+
+        //-------------------------------------------------------------------------------------------
+
+        // Implemented on UIElements which make use of autosizing text
+        protected virtual TextFormatFlags get_text_format_flags() { throw new NotImplementedException(); }
+
+        // The size by which we increase/decrease the font size when brute-forcing the ideal size
+        // Lower values provide more accurate results while higher values are faster
+        const float text_size_increment = 1f;
+
+        // Doesn't so much "fix" the text size as it finds the ideal one for the control's size
+        // Done by brute forcing the new size via trial and error
+        protected void fix_text_size(int upper_limit) {
+
+            //System.Console.WriteLine("S"); 
+
+            // If underlying.Text.Trim() contains nothing, add a single character to avoid crashing
+            // If underlying.Text.Trim() has text, replace all spaces in underlying.Text with an underscore for correct sizing
+            // Without replacing the spaces, trailing/leading spaces won't affect the sizing
+            string text = underlying.Text.Trim() == "" ? "A" : underlying.Text.Replace(" ", "_");
+
+            float size = underlying.Font.Size;
+            Font last_font = new Font(underlying.Font.FontFamily, size);
+
+            bool done = false;
+
+            bool incrementing = true;
+
+            Size underlying_size = new Size(underlying.Width, underlying.Height);
+
+            Size current = TextRenderer.MeasureText(text, last_font, underlying.Size, get_text_format_flags());
+            if (current.Width > underlying.Width || current.Height > underlying.Height) incrementing = false;
+
+            if (size < 0) size = 1;
+
+            switch (incrementing) {
+
+                case true:
+                    while (!done) {
+                        if ((size + text_size_increment) > upper_limit) { size = upper_limit; done = true; }
+                        size += text_size_increment;
+                        Font bigger_font = new Font(last_font.FontFamily, size);
+                        Size bigger_size = TextRenderer.MeasureText(text, bigger_font, underlying.Size, get_text_format_flags());
+                        if (bigger_size.Width > underlying.Width || bigger_size.Height > underlying.Height) done = true;
+                        else last_font = bigger_font;
+                    } break;
+
+                case false:
+                    while (!done) {
+                        if ((size - text_size_increment) < 1) { size = 1+text_size_increment; done = true; }
+                        size -= text_size_increment;
+                        Font smaller_font = new Font(last_font.FontFamily, size);
+                        Size smaller_size = TextRenderer.MeasureText(text, smaller_font, underlying_size, get_text_format_flags());
+                        if (smaller_size.Width < underlying.ClientSize.Width && smaller_size.Height < underlying.ClientSize.Height) done = true;
+                        last_font = smaller_font;
+                    } break;
+                
+            }
+
+            underlying.Font = last_font;
 
         }
 

@@ -10,11 +10,17 @@ namespace WinForMono {
 
         public UITextBox(bool _multiline) {
 
-            derived_underlying = new TextBox();
-
             multiline = _multiline;
 
+            derived_underlying = new TextBox();
+            derived_underlying.AcceptsReturn = multiline;
+            derived_underlying.AutoSize = false;
+
+            multiline = true;
+
             CALL_THIS_AFTER_CONSTRUCTION_PLEASE();
+
+            autosize_text = false;
 
         }
 
@@ -29,9 +35,24 @@ namespace WinForMono {
             set => derived_underlying.Text = value;
         }
 
-        public bool multiline {
-            get => derived_underlying.Multiline;
-            set => derived_underlying.Multiline = value;
+        public bool multiline;
+
+        public bool autosize_text;
+
+        protected override TextFormatFlags get_text_format_flags() {
+
+            TextFormatFlags returning = TextFormatFlags.Default | TextFormatFlags.TextBoxControl;
+
+            returning = returning | TextFormatFlags.Left;
+            returning = returning | TextFormatFlags.Top;
+
+            return returning;
+
+        }
+
+        protected override void on_transform_invalidated() {
+            base.on_transform_invalidated();
+            if (autosize_text) fix_text_size(int.MaxValue);
         }
 
     }

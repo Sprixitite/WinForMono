@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
@@ -6,11 +7,44 @@ namespace WinForMono {
 
     public class UIWindow : WinformWrapper {
 
+        public delegate void OnFormElementClicked(object control);
+        public event OnFormElementClicked form_element_clicked;
+
+        public delegate void OnKeyDown(KeyEventArgs key);
+        public event OnKeyDown form_key_down;
+
         private class GenericForm : Form {}
 
         public UIWindow() {
             derived_underlying = new GenericForm();
             derived_underlying.Resize += invalidate_size;
+            form_element_clicked += (object o) => { }; // Fake user so the event never gets deleted
+            form_key_down += (KeyEventArgs e) => {  };
+            derived_underlying.KeyDown += (object o, KeyEventArgs e) => { e.SuppressKeyPress = true; form_key_down.Invoke(e); e.Handled = true; };
+            derived_underlying.KeyPreview = true;
+        }
+
+        public bool fullscreen {
+            get => _fullscreen;
+            set {
+                if (value == true) {
+                    derived_underlying.WindowState = FormWindowState.Normal;
+                    derived_underlying.FormBorderStyle = FormBorderStyle.None;
+                    derived_underlying.WindowState = FormWindowState.Maximized;
+                    //derived_underlying.mainPanel.Dock = DockStyle.Fill;
+                    //derived_underlying.BringToFront();
+                } else {
+                    derived_underlying.WindowState = FormWindowState.Maximized;
+                    derived_underlying.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+                }
+                _fullscreen = value;
+            }
+        }
+        private bool _fullscreen;
+
+        public Icon icon {
+            get => derived_underlying.Icon;
+            set => derived_underlying.Icon = value;
         }
 
         public void run() {
@@ -33,6 +67,10 @@ namespace WinForMono {
             set => derived_underlying = (Form)value;
         }
         private Form derived_underlying;
+
+        public void element_clicked(object o, EventArgs e) {
+            form_element_clicked.Invoke(o);
+        }
 
         public UIResult spawn(
             string message="DEFAULT_MESSAGE",
