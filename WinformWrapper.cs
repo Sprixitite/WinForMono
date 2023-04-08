@@ -119,6 +119,8 @@ namespace WinForMono {
 
             invalidate_size();
 
+            underlying.Refresh();
+
             parent.underlying.ResumeLayout();
 
         }

@@ -22,7 +22,15 @@ namespace WinForMono {
             derived_underlying.Image = i;
             derived_underlying.SizeMode = PictureBoxSizeMode.StretchImage;
 
+            image_clicked += () => {};
+            underlying.Click += (object o, EventArgs e) => { image_clicked.Invoke(); };
+
             CALL_THIS_AFTER_CONSTRUCTION_PLEASE();
+        }
+
+        public void clear_click_events() {
+            image_clicked = null;
+            image_clicked += () => {};
         }
 
         protected override void on_hover_start(object sender, EventArgs _e) {
@@ -66,6 +74,8 @@ namespace WinForMono {
             }
         }
         private Color _hover_background_colour;
+
+        public event Action image_clicked;
 
     }
 

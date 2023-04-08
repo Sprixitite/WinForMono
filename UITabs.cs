@@ -6,7 +6,7 @@ namespace WinForMono {
 
     public class UITabs : UIElement {
 
-        private class UITabPage : UIElement {
+        public class UITabPage : UIElement {
 
             public UITabPage(string name) {
                 derived_underlying = new TabPage(name);
@@ -26,7 +26,7 @@ namespace WinForMono {
             pages = new Dictionary<string, UITabPage>();
         }
 
-        public UITabs(string[] tabs) {
+        public UITabs(params string[] tabs) {
             derived_underlying = new TabControl();
             pages = new Dictionary<string, UITabPage>();
             foreach (string s in tabs) { this.add_tab(s); }
@@ -42,12 +42,14 @@ namespace WinForMono {
             UIElement.bind_parent(pages[name]);
         }
 
-        public void remove_tab(string name) {
+        public UITabPage get_tab(string name) => pages[name];
+
+        public void remove_tab(string name, bool error=true) {
             if (pages.ContainsKey(name)) {
                 remove_element(pages[name]);
                 pages.Remove(name);
             } else {
-                throw new Exception("Attempt to remove tab that didn't exist!");
+                if (error) throw new Exception("Attempt to remove tab that didn't exist!");
             }
         }
 

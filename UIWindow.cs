@@ -18,11 +18,30 @@ namespace WinForMono {
         public UIWindow() {
             derived_underlying = new GenericForm();
             derived_underlying.Resize += invalidate_size;
+            _performant_resizing = false;
             form_element_clicked += (object o) => { }; // Fake user so the event never gets deleted
             form_key_down += (KeyEventArgs e) => {  };
             derived_underlying.KeyDown += (object o, KeyEventArgs e) => { e.SuppressKeyPress = true; form_key_down.Invoke(e); e.Handled = true; };
             derived_underlying.KeyPreview = true;
         }
+
+        public bool performant_resizing {
+            get => _performant_resizing;
+            set {
+                _performant_resizing = value;
+                switch (_performant_resizing) {
+                    case true:
+                        derived_underlying.Resize -= invalidate_size;
+                        derived_underlying.ResizeEnd += invalidate_size;
+                        break;
+                    case false:
+                        derived_underlying.ResizeEnd -= invalidate_size;
+                        derived_underlying.Resize += invalidate_size;
+                        break;
+                }
+            }
+        }
+        private bool _performant_resizing;
 
         public bool fullscreen {
             get => _fullscreen;

@@ -18,7 +18,7 @@ namespace WinForMono {
             get => _border_colour;
             set {
                 _border_colour = value;
-                if (!hovering) underlying.Invalidate();
+                if (!hovering) underlying.Refresh();
             }
         }
         private Color _border_colour;
@@ -65,7 +65,7 @@ namespace WinForMono {
             get => _hover_border_colour;
             set {
                 _hover_border_colour = value;
-                if (hovering) underlying.Invalidate();
+                if (hovering) underlying.Refresh();
             }
         }
         private Color _hover_border_colour;

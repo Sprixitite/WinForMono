@@ -43,6 +43,7 @@ namespace WinForMono {
             underlying.Paint += paint_border;
             underlying.MouseEnter += on_hover_start;
             underlying.MouseLeave += on_hover_end;
+            typeof(Control).GetProperty("ResizeRedraw", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Default).SetValue(underlying, false);
         }
 
         //-------------------------------------------------------------------------------------------
@@ -180,7 +181,7 @@ namespace WinForMono {
             underlying.Height = height;
 
             refresh_underlying_region();
-
+            
         }
 
         //-------------------------------------------------------------------------------------------
@@ -225,7 +226,7 @@ namespace WinForMono {
                         size += text_size_increment;
                         Font bigger_font = new Font(last_font.FontFamily, size);
                         Size bigger_size = TextRenderer.MeasureText(text, bigger_font, underlying.Size, get_text_format_flags());
-                        if (bigger_size.Width > underlying.Width || bigger_size.Height > underlying.Height) done = true;
+                        if (bigger_size.Width > underlying.ClientSize.Width || bigger_size.Height > underlying.ClientSize.Height) done = true;
                         else last_font = bigger_font;
                     } break;
 
@@ -240,6 +241,8 @@ namespace WinForMono {
                     } break;
                 
             }
+
+            last_font = new Font(last_font.FontFamily, Math.Max(1, size-text_size_increment));
 
             underlying.Font = last_font;
 
